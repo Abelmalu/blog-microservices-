@@ -1,3 +1,5 @@
-module github.com/abelmalu/mini-blog
+module github.com/abelmalu/blog-microservices
 
 go 1.25.3
+
+require github.com/joho/godotenv v1.5.1 // indirect
