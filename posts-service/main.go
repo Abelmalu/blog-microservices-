@@ -1,22 +1,28 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
-
+	"strconv"
 	"github.com/joho/godotenv"
+	"strings"
 )
 
 type Post struct {
-	Id          int
-	Name        string
-	Description string
+	Id          int    `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 var posts = []Post{
 
-	{Id: 1, Name: "Microservices ", Description: "An in-depth look at why Go's concurrency model is the best in the businness "},
+	{
+		Id:          1,
+		Name:        "Microservices",
+		Description: "An in-depth look at why Go's concurrency model is the best in the businness ",
+	},
 	{
 		Id:          2,
 		Name:        "Mastering Net/HTTP: No Frameworks Needed",
@@ -38,12 +44,47 @@ type MyHandler struct {
 }
 
 func (h MyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
 
-	fmt.Fprint(w, "welcome to my website")
+	switch {
+	case path == "/":
+		fmt.Fprint(w, "homepage")
 
+	case path == "/posts":
+		// Return all posts
+		data, _ := json.MarshalIndent(posts, "", "  ")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(data)
+	case strings.HasPrefix(path, "/posts/"):
+		// Handle /posts/{id}
+		id := strings.TrimPrefix(path, "/posts/")
+		// Parse the id to an integer
+		pid, err := strconv.Atoi(id)
+		if err != nil {
+			http.Error(w, "invalid post id", http.StatusBadRequest)
+			return
+		}
+		// Now find the post with this id
+		for _, post := range posts {
+			if post.Id == pid {
+				data, _ := json.MarshalIndent(post, "", "  ")
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				w.Write(data)
+				return
+			}
+		}
+		http.Error(w, "Post not found", http.StatusNotFound)
+		
+
+	default:
+		http.Error(w, "404 not found", http.StatusNotFound)
+	}
 }
 
 func main() {
+
 	godotenv.Load(".env")
 	portAdd := os.Getenv("PORT")
 
