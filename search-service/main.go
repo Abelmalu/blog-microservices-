@@ -1,50 +1,48 @@
 package main
 
 import (
+	//"encoding/json"
 	"fmt"
-	"encoding/json"
-
-
+	"github.com/joho/godotenv"
+	"io"
+	"net/http"
+	"os"
 )
 
-type Student struct {
-	ID         string `json:"id"`
-	FullName   string `json:"full_name"`
-	Batch      string `json:"batch"`
-	Department string `json:"department"`
-}
+type SearchHandler struct{}
 
-// func main() {
-// 	student := Student{
-// 		ID:         "C6:65:D3:EA",
-// 		FullName:   "Alice Johnson",
-// 		Batch:      "Batch 2025",
-// 		Department: "Computer Science",
-// 	}
-// 	// name := "abe"
+func (h SearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-//  data, err := json.Marshal(student)
-// 	if err != nil {
-// 		panic(err)
-// 	}
+	resp, err := http.Get("http://localhost:8080/posts")
 
-// 	fmt.Println((data))
-
-
-// 	// ages := []int {1,2,3,4,5}
-
-// 	// fmt.Println(ages)
-// }
-
-
-func main() {
-	jsonStr := `{"id":"C6:65:D3:EA","full_name":"Alice Johnson","batch":"Batch 2025","department":"Computer Science"}`
-
-	var student Student
-	err := json.Unmarshal([]byte(jsonStr), &student)
 	if err != nil {
-		panic(err)
+
+		http.Error(w, "failed to fetch posts", http.StatusInternalServerError)
 	}
 
-	fmt.Println(student.FullName) // Output: Alice Johnson
+	defer resp.Body.Close()
+	// status := resp.Status
+	// fmt.Println(resp.Body.Read())
+	// io.Copy(os.Stdout, resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	fmt.Println(string(body))
+
+	_, err = io.Copy(os.Stdout, resp.Body)
+	// if err != nil {
+	// 	fmt.Fprintf(os.Stderr, "Error copying: %v\n", err)
+	// 	os.Exit(1)
+
+	// }
+}
+
+func main() {
+
+	godotenv.Load(".env")
+
+	handler := SearchHandler{}
+
+	portString := os.Getenv("PORT")
+
+	http.ListenAndServe(":"+portString, handler)
+
 }
