@@ -3,10 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/joho/godotenv"
 	"net/http"
 	"os"
 	"strconv"
-	"github.com/joho/godotenv"
 	"strings"
 )
 
@@ -46,6 +46,8 @@ type MyHandler struct {
 func (h MyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 
+	print(path)
+
 	switch {
 	case path == "/":
 		fmt.Fprint(w, "homepage")
@@ -76,7 +78,6 @@ func (h MyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		http.Error(w, "Post not found", http.StatusNotFound)
-		
 
 	default:
 		http.Error(w, "404 not found", http.StatusNotFound)

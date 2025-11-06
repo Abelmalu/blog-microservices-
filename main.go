@@ -2,29 +2,32 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"os"
+	"net/http"
+	//"os"
 )
 
 func main() {
-	file, err := os.Open("example.txt")
+
+	resp, err := http.Get("http://localhost:8080/posts")
+
 	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
 
-	buf := make([]byte, 100)
-	fmt.Println("the length of the buffer is ", len(buf))
-	for {
-		n, err := file.Read(buf)
-		newFile, _ := io.ReadAll(file)
-		if err == io.EOF {
-			break // End of file
-		}
-		if err != nil {
-			panic(err)
-		}
-
-		fmt.Print(string(buf[:n]))
+		fmt.Println(err)
 	}
+	defer resp.Body.Close()
+
+	buffer := make([]byte, 1000)
+
+	n, err := resp.Body.Read(buffer)
+	length := resp.ContentLength
+
+	fmt.Println(length)
+
+	if err != nil {
+
+		fmt.Println(err)
+	}
+
+	fmt.Println(string(buffer), n)
+
 }

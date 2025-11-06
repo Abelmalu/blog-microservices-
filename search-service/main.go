@@ -13,26 +13,33 @@ type SearchHandler struct{}
 
 func (h SearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	resp, err := http.Get("http://localhost:8080/posts")
+	switch r.URL.Path {
 
-	if err != nil {
+	case "/search":
 
-		http.Error(w, "failed to fetch posts", http.StatusInternalServerError)
+		fmt.Fprintf(w, "welcome to the search endpoint ")
+
+		fmt.Println(r.URL.Path)
+
+		resp, err := http.Get("http://localhost:8080/posts")
+
+		if err != nil {
+
+			fmt.Println(err)
+		}
+
+		defer resp.Body.Close()
+		ResponseBody, err := (io.ReadAll(resp.Body))
+		fmt.Println(string(ResponseBody))
+
+		values := r.URL.Query()
+		id := values["id"]
+
+		fmt.Println("the the query parameters values i.e what Query method returns ", values)
+
+		fmt.Println("the ", id[0])
 	}
 
-	defer resp.Body.Close()
-	// status := resp.Status
-	// fmt.Println(resp.Body.Read())
-	// io.Copy(os.Stdout, resp.Body)
-	body, err := io.ReadAll(resp.Body)
-	fmt.Println(string(body))
-
-	_, err = io.Copy(os.Stdout, resp.Body)
-	// if err != nil {
-	// 	fmt.Fprintf(os.Stderr, "Error copying: %v\n", err)
-	// 	os.Exit(1)
-
-	// }
 }
 
 func main() {
