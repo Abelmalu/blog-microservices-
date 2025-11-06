@@ -1,23 +1,27 @@
 package main
 
 import (
-	//"encoding/json"
+	"encoding/json"
 	"fmt"
-	"github.com/joho/godotenv"
 	"io"
 	"net/http"
 	"os"
+	"strconv"
+	// "reflect"
+
+	"github.com/joho/godotenv"
 )
 
 type SearchHandler struct{}
 
 func (h SearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("hellow")
 
 	switch r.URL.Path {
 
 	case "/search":
 
-		fmt.Fprintf(w, "welcome to the search endpoint ")
+		// fmt.Fprintf(w, "welcome to the search endpoint ")
 
 		fmt.Println(r.URL.Path)
 
@@ -29,15 +33,53 @@ func (h SearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		defer resp.Body.Close()
-		ResponseBody, err := (io.ReadAll(resp.Body))
-		fmt.Println(string(ResponseBody))
+		ResponseBody, _ := io.ReadAll(resp.Body)
+		type Posts struct {
+			Id          int
+			Name        string
+			Description string
+		}
+
+		var result []Posts
+
+		err = json.Unmarshal(ResponseBody, &result)
+
+		// fmt.Println(result, "this is the result in golang map")
+		// fmt.Println(reflect.TypeOf(result[0].Id))
+
+		if err != nil {
+
+			fmt.Println(err)
+		}
 
 		values := r.URL.Query()
-		id := values["id"]
+		QueryId := values["id"][0]
 
-		fmt.Println("the the query parameters values i.e what Query method returns ", values)
+		for _, value := range result {
 
-		fmt.Println("the ", id[0])
+		
+			id := strconv.Itoa(value.Id)
+			//for some reason string(value.id) didn't work CHECK IT OUT
+
+			if id == QueryId {
+				fmt.Println(id)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				JsonData, _:= json.Marshal(value)
+				w.Write(JsonData)
+				
+
+			} else{
+
+				fmt.Println("come on")
+
+
+			}
+
+			
+
+		}
+
 	}
 
 }
