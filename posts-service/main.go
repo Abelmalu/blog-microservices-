@@ -1,8 +1,10 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"net/http"
 	"os"
@@ -71,7 +73,7 @@ func (h MyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		for _, post := range posts {
 			if post.Id == pid {
 				data, _ := json.MarshalIndent(post, "", "  ")
-				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set("Content-Type", "text/html  ")
 				w.WriteHeader(http.StatusOK)
 				w.Write(data)
 				return
@@ -88,6 +90,44 @@ func main() {
 
 	godotenv.Load(".env")
 	portAdd := os.Getenv("PORT")
+
+	// username:password@protocol(address)/dbname?param=value
+
+	dsn := "root:@tcp(127.0.0.1:3306)/blogtest?parseTime=true"
+
+	// dsn := "root:@tcp(127.0.0.1:3306)/blog?parseTime=true"
+
+	db, sqlError := sql.Open("mysql", dsn)
+
+	result, syntaxErro := db.Exec(
+
+		` CREATE TABLE IF NOT EXISTS posts (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(50),
+      
+		description VARCHAR(250)
+    )`,
+	)
+
+	if syntaxErro != nil {
+
+		fmt.Println("the error from syntax is ")
+
+		fmt.Println(syntaxErro)
+	}
+	fmt.Println(result)
+
+	if sqlError != nil {
+
+		fmt.Println("the error with the db connection pool is")
+
+		fmt.Println(sqlError)
+	} else {
+
+		fmt.Println("no error")
+	}
+
+	defer db.Close()
 
 	handler := MyHandler{}
 

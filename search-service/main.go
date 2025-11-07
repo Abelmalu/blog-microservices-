@@ -1,20 +1,20 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/joho/godotenv"
 	"io"
 	"net/http"
 	"os"
 	"strconv"
-	// "reflect"
-
-	"github.com/joho/godotenv"
 )
 
 type SearchHandler struct{}
 
 func (h SearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
 	fmt.Println("hellow")
 
 	switch r.URL.Path {
@@ -57,26 +57,19 @@ func (h SearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		for _, value := range result {
 
-		
+			// fmt.Println("this the return of the string method", string(3))
+
 			id := strconv.Itoa(value.Id)
 			//for some reason string(value.id) didn't work CHECK IT OUT
 
 			if id == QueryId {
-				fmt.Println(id)
+
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				JsonData, _:= json.Marshal(value)
+				JsonData, _ := json.Marshal(value)
 				w.Write(JsonData)
-				
-
-			} else{
-
-				fmt.Println("come on")
-
 
 			}
-
-			
 
 		}
 
