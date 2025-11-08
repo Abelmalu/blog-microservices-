@@ -3,13 +3,18 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+
+	"strings"
+	"strconv"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/joho/godotenv"
 	"net/http"
 	"os"
-	"strconv"
-	"strings"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/joho/godotenv"
+	//
+	// "strconv"
+	// "strings"
 )
 
 type Post struct {
@@ -18,32 +23,11 @@ type Post struct {
 	Description string `json:"description"`
 }
 
-var posts = []Post{
-
-	{
-		Id:          1,
-		Name:        "Microservices",
-		Description: "An in-depth look at why Go's concurrency model is the best in the businness ",
-	},
-	{
-		Id:          2,
-		Name:        "Mastering Net/HTTP: No Frameworks Needed",
-		Description: "A tutorial on building a high-performance HTTP server using only the Go Standard Library, focusing on the http.Handler interface and ServeMux.",
-	},
-	{
-		Id:          3,
-		Name:        "Optimizing PostgreSQL Queries for Scale",
-		Description: "Best practices for indexing, query planning, and connection pooling to ensure your application's database performance scales with your traffic.",
-	},
-	{
-		Id:          4,
-		Name:        "Understanding Message Brokers (Kafka vs. RabbitMQ)",
-		Description: "A comparison of the two leading message brokers and a guide on choosing the right one for asynchronous task processing in your service-oriented architecture.",
-	},
-}
-
 type MyHandler struct {
 }
+
+var db *sql.DB
+var sqlError error
 
 func (h MyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
@@ -55,11 +39,37 @@ func (h MyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "homepage")
 
 	case path == "/posts":
-		// Return all posts
-		data, _ := json.MarshalIndent(posts, "", "  ")
-		w.Header().Set("Content-Type", "application/json")
+
+		var id int
+		var name, description string
+
+		var posts []Post
+
+		rows, err := db.Query(`SELECT * FROM posts`)
+		defer rows.Close()
+
+		if err != nil {
+
+			fmt.Println(err, "error from the select statement ")
+		}
+
+		for rows.Next() {
+
+			rows.Scan(&id, &name, &description)
+			newPost := Post{
+				Id:          id,
+				Name:        name,
+				Description: description,
+			}
+			posts = append(posts, newPost)
+		}
+		
+		data, _ := json.MarshalIndent(posts, "", " ")
+
+		w.Header().Set("Content-Type", "application/json ")
 		w.WriteHeader(http.StatusOK)
 		w.Write(data)
+
 	case strings.HasPrefix(path, "/posts/"):
 		// Handle /posts/{id}
 		id := strings.TrimPrefix(path, "/posts/")
@@ -97,7 +107,7 @@ func main() {
 
 	// dsn := "root:@tcp(127.0.0.1:3306)/blog?parseTime=true"
 
-	db, sqlError := sql.Open("mysql", dsn)
+	db, sqlError = sql.Open("mysql", dsn)
 
 	result, syntaxErro := db.Exec(
 
